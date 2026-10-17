@@ -37,9 +37,10 @@ jit.gl.model（B） → jit.gl.node ept_shB                          → ept_shB
 2. **シェーダーを置く**：`sh_cast.genexpr` を `shaders/` にコピーする
 3. **プリセットを足す**：`presets_shadow.json` の5つを、`presets.json` の `"presets"` の末尾に足す
    - 影 ／ 影が溶ける ／ 影が散る ／ 影が入れ替わる ／ 影と墨
-4. **演奏者のメッシュを置く**：transinst で `python3 scripts/export_shadow_meshes.py` を実行する
-   - `models/shadow/<id>.obj` ができる。足が y=0、高さ 1、8万面、1人約7MB
-   - これを `performers/` としてパッチの横に置き、Max の検索パスに入れる（Options → File Preferences）
+4. **演奏者のメッシュを置く**：28人分の `models/shadow/<id>.obj` は Git LFS で入っている（足が y=0、高さ 1、8万面、1人約7MB）
+   - 初めての Mac では `brew install git-lfs && git lfs install` をしてから、transinst で `git lfs pull` する
+   - 作り直すときは `python3 scripts/export_shadow_meshes.py`（Meshy の GLB が必要）
+   - `models/shadow` を `performers/` としてパッチの横にコピーし、Max の検索パスに入れる（Options → File Preferences）
 5. `python build_tex.py`
 
 ## 操作
