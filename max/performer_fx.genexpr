@@ -1,0 +1,33 @@
+// jit.gen codebox: morph / melt / scatter for performer point clouds.
+// in1: position matrix of performer A (3 planes float32, from <id>_pos.jxf)
+// in2: position matrix of performer B (same dim)
+// out1: positions to send to jit.gl.mesh @draw_mode points
+// Bodies are normalised to y = -1 (feet) .. +1 (head).
+
+Param morph(0);     // 0 = A, 1 = B
+Param melt(0);      // 0 = intact, 1 = puddle on the floor
+Param scatter(0);   // 0 = intact, 1 = fully blown apart
+Param spread(0.6);  // how far a melted puddle spreads sideways
+Param seed(0);
+
+// stable per-point random numbers in 0..1
+r1 = fract(sin(dot(norm + seed, vec(12.9898, 78.233))) * 43758.5453);
+r2 = fract(sin(dot(norm + seed, vec(39.3468, 11.135))) * 24634.6345);
+r3 = fract(sin(dot(norm + seed, vec(73.156, 52.235))) * 13758.937);
+
+// morph: points at the same index sit on roughly the same body region,
+// so a staggered mix reads as one person turning into another
+k = smoothstep(r1 * 0.5, 0.5 + r1 * 0.5, morph);
+p = mix(in1, in2, k);
+
+// melt: the head goes first, each point slides down to the floor and spreads out
+h = (p.y + 1) * 0.5;
+d = smoothstep(0, 1, clamp(melt * 2 - (1 - h) - r2 * 0.3, 0, 1));
+outward = vec(p.x, 0, p.z) * (1 + d * spread * (0.5 + r3));
+p = mix(p, vec(outward.x, -1 + 0.02 * r1, outward.z), d);
+
+// scatter: fly out from the body centre with a random tilt
+dir = normalize(vec(p.x, p.y, p.z) + (vec(r1, r2, r3) - 0.5) * 1.5 + vec(0, 0.0001, 0));
+p = p + dir * scatter * scatter * (1 + 3 * r2);
+
+out1 = p;

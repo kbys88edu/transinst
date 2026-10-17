@@ -1,0 +1,46 @@
+{
+  "style": {
+    "note": "参考: モノクロ高コントラスト。白いプリーツの長衣（参考画像1）／黒い衣装（参考画像3・4）。Max側でモノクロ化するので、テクスチャは無彩色寄りにしておく。",
+    "suffix": "full body, single realistic human musician, natural performing posture, monochrome palette, black and white photographic look, high contrast studio lighting, clean anatomy, instrument clearly separated from the body"
+  },
+  "wardrobe": {
+    "white": "wearing a loose flowing white pleated linen garment, barefoot",
+    "black": "wearing a loose black long-sleeve top and wide black trousers"
+  },
+  "performers": [
+    {"id": "violin",        "ja": "ヴァイオリン",       "section": "strings",    "tier": 1, "wardrobe": "white", "subject": "a violinist standing, violin on left shoulder, bow drawn across the strings with the right arm raised"},
+    {"id": "viola",         "ja": "ヴィオラ",           "section": "strings",    "tier": 2, "wardrobe": "black", "subject": "a violist standing, viola on left shoulder, bowing with the right arm"},
+    {"id": "cello",         "ja": "チェロ",             "section": "strings",    "tier": 1, "wardrobe": "white", "subject": "a cellist seated on a stool, cello between the knees, endpin on the floor, bowing horizontally"},
+    {"id": "double_bass",   "ja": "コントラバス",       "section": "strings",    "tier": 2, "wardrobe": "black", "subject": "a double bass player standing beside a tall upright double bass, bowing low on the strings"},
+    {"id": "harp",          "ja": "ハープ",             "section": "strings",    "tier": 1, "wardrobe": "white", "subject": "a harpist seated, large concert pedal harp leaning on the right shoulder, both hands plucking the strings"},
+
+    {"id": "piccolo",       "ja": "ピッコロ",           "section": "woodwinds",  "tier": 2, "wardrobe": "white", "subject": "a piccolo player standing, small piccolo held horizontally to the right at the lips"},
+    {"id": "flute",         "ja": "フルート",           "section": "woodwinds",  "tier": 1, "wardrobe": "white", "subject": "a flutist standing, silver transverse flute held horizontally to the right at the lips"},
+    {"id": "oboe",          "ja": "オーボエ",           "section": "woodwinds",  "tier": 2, "wardrobe": "black", "subject": "an oboist standing, oboe held in front pointing down and forward at the lips"},
+    {"id": "english_horn",  "ja": "イングリッシュホルン", "section": "woodwinds",  "tier": 2, "wardrobe": "black", "subject": "an english horn player standing, cor anglais with bent bocal and bulb bell held in front"},
+    {"id": "clarinet",      "ja": "クラリネット",       "section": "woodwinds",  "tier": 2, "wardrobe": "black", "subject": "a clarinetist standing, black clarinet held in front pointing down and forward at the lips"},
+    {"id": "bass_clarinet", "ja": "バスクラリネット",   "section": "woodwinds",  "tier": 2, "wardrobe": "black", "subject": "a bass clarinet player seated, long black bass clarinet with curved metal neck and upturned bell resting on the floor"},
+    {"id": "bassoon",       "ja": "ファゴット",         "section": "woodwinds",  "tier": 2, "wardrobe": "white", "subject": "a bassoonist seated, tall wooden bassoon held diagonally across the body, bocal at the lips"},
+    {"id": "contrabassoon", "ja": "コントラファゴット", "section": "woodwinds",  "tier": 2, "wardrobe": "white", "subject": "a contrabassoon player seated, very large folded contrabassoon standing on the floor beside the body"},
+
+    {"id": "horn",          "ja": "ホルン",             "section": "brass",      "tier": 2, "wardrobe": "black", "subject": "a french horn player seated, coiled brass horn on the lap, right hand inside the bell"},
+    {"id": "trumpet",       "ja": "トランペット",       "section": "brass",      "tier": 1, "wardrobe": "black", "subject": "a trumpeter standing, brass trumpet raised horizontally at the lips, bell pointing forward"},
+    {"id": "trombone",      "ja": "トロンボーン",       "section": "brass",      "tier": 2, "wardrobe": "black", "subject": "a trombonist standing, brass trombone at the lips, slide extended forward"},
+    {"id": "bass_trombone", "ja": "バストロンボーン",   "section": "brass",      "tier": 2, "wardrobe": "black", "subject": "a bass trombonist standing, large-bore bass trombone at the lips, slide extended forward"},
+    {"id": "tuba",          "ja": "チューバ",           "section": "brass",      "tier": 2, "wardrobe": "white", "subject": "a tuba player seated, large brass tuba on the lap, bell pointing upward"},
+
+    {"id": "timpani",       "ja": "ティンパニ",         "section": "percussion", "tier": 1, "wardrobe": "white", "subject": "a timpanist standing behind two large copper kettle drums, mallets raised in both hands"},
+    {"id": "snare_drum",    "ja": "スネアドラム",       "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing at a snare drum on a stand, two drumsticks striking"},
+    {"id": "bass_drum",     "ja": "大太鼓",             "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing beside a large concert bass drum mounted on a tilting stand, striking with a big soft beater"},
+    {"id": "cymbals",       "ja": "シンバル",           "section": "percussion", "tier": 2, "wardrobe": "white", "subject": "a percussionist standing, a pair of large crash cymbals held apart in both hands about to clash"},
+    {"id": "triangle",      "ja": "トライアングル",     "section": "percussion", "tier": 2, "wardrobe": "white", "subject": "a percussionist standing, small metal triangle hanging from the raised left hand, striking with a metal beater"},
+    {"id": "tam_tam",       "ja": "タムタム",           "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing beside a huge hanging tam-tam gong in a frame, striking with a large mallet"},
+    {"id": "glockenspiel",  "ja": "グロッケンシュピール", "section": "percussion", "tier": 2, "wardrobe": "white", "subject": "a percussionist standing at an orchestral glockenspiel, two small mallets in hand"},
+    {"id": "xylophone",     "ja": "シロフォン",         "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing at a wooden xylophone on a frame, two mallets in hand"},
+
+    {"id": "celesta",       "ja": "チェレスタ",         "section": "keyboards",  "tier": 2, "wardrobe": "white", "subject": "a celesta player seated at a small upright celesta keyboard, both hands on the keys"},
+    {"id": "piano",         "ja": "ピアノ",             "section": "keyboards",  "tier": 2, "wardrobe": "black", "subject": "a pianist seated at a grand piano, both hands on the keyboard, lid open"},
+
+    {"id": "conductor",     "ja": "指揮者",             "section": "extra",      "tier": 2, "wardrobe": "black", "subject": "an orchestra conductor standing, both arms raised wide, baton in the right hand"}
+  ]
+}
