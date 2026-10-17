@@ -1,0 +1,65 @@
+[
+ {
+  "name": "影",
+  "video": 1,
+  "src": "shadow",
+  "gen": "none",
+  "light": 0,
+  "breathe": 0.3
+ },
+ {
+  "name": "影が溶ける",
+  "video": 1,
+  "src": "shadow",
+  "gen": "none",
+  "light": 0,
+  "breathe": 0.3,
+  "fx": {
+   "melt": 0.7
+  },
+  "shadow": {
+   "shlights": 2
+  }
+ },
+ {
+  "name": "影が散る",
+  "video": 1,
+  "src": "shadow",
+  "gen": "none",
+  "light": 0,
+  "breathe": 0.3,
+  "fx": {
+   "edge": 0.8,
+   "echo": 0.4
+  },
+  "shadow": {
+   "shtear": 0.8,
+   "shsoft": 0.8
+  }
+ },
+ {
+  "name": "影が入れ替わる",
+  "video": 1,
+  "src": "shadow",
+  "gen": "none",
+  "light": 1,
+  "breathe": 0.3,
+  "shauto": 1,
+  "shadow": {
+   "shlights": 1,
+   "shsoft": 0.3,
+   "shtrail": 0.6
+  }
+ },
+ {
+  "name": "影と墨",
+  "video": 1,
+  "src": "shadow",
+  "gen": "fluid",
+  "light": 1,
+  "breathe": 0.3,
+  "shadow": {
+   "shlights": 2
+  }
+ }
+]

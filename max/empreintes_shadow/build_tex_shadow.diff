@@ -1,0 +1,147 @@
+--- a/build_tex.py
++++ b/build_tex.py
+@@ -11,6 +11,8 @@
+   fx_edge 輪郭の粒子化 → fx_time 残像・フィードバック変形・スリットスキャン・データモッシュ →
+   fx_organic 有機ノイズ／生成器の重ね（スクリーン・乗算・マスク・差）→ fx_tone 網点・ディザ →
+   fx_light 色ずれ・光のにじみ・光漏れ・白黒 → fx_type 文字（一撃ごとに単語）→ finish
++影（2026-10-17）: 動画の代わりに、演奏者の 3D モデル（transinst の export_shadow_meshes.py の OBJ）の影を映像の列へ流す（プリセットの "src": "shadow"）。
++  光 3 つの多重の影・半影・ちぎれ・残像・2 人の入れ替わりを sh_cast で作り、あとは動画と同じエフェクトの列・生成の核（ept_vid）を通る。
+ 音: マスターの WAV を sfplay~ で鳴らす（「開く」→ 再生）か、adc~ の入力。音量（−55〜−15 dBFS → 0〜1、render_video.py と同じ）・
+ 低域（180 Hz 以下）・高域（2.5 kHz 以上）・一撃（音量の急な立ち上がり）・嵐（3 秒ならした音量が高い）・高さ（fzero~）を取り、param で全部の jit.gl.pix へ。
+ 状態は float32 で 1 コマ前を jit.gl.texture に写して右の入口へ戻す（Max 付属の jit.gl.pix.wake と同じ作り）。見え方と仕上げは 1920×1080。
+@@ -34,6 +36,12 @@
+           "tone": ["halftone", "dither", "pattern"], "light": ["chroma", "bloom", "leak", "mono"], "type": ["typo"]}
+ # 高さ（12 半音）→ 板の振動の型 (n, m)。低い音ほど粗い模様、高いほど細かく
+ MODES = [(1, 2), (1, 3), (2, 3), (1, 4), (2, 5), (3, 4), (1, 5), (3, 5), (2, 7), (4, 5), (3, 7), (5, 6)]
++# 影の演奏者（transinst の models/manifest.json の id。performers/<id>.obj を Max の検索パスに置く）。シンバルは形が崩れたので除外（2026-10-17）
++PERFORMERS = ["violin", "viola", "cello", "double_bass", "harp", "piccolo", "flute", "oboe", "english_horn", "clarinet", "bass_clarinet",
++              "bassoon", "contrabassoon", "horn", "trumpet", "trombone", "bass_trombone", "tuba", "timpani", "snare_drum", "bass_drum",
++              "triangle", "tam_tam", "glockenspiel", "xylophone", "celesta", "piano", "conductor"]
++# 影の量（sh_cast の param）。プリセットの "shadow" で上書き。どのプリセットでも送る（影でないプリセットでは使われない）
++SHD = {"shlights": 3, "shspread": 0.5, "shsize": 1.5, "shsoft": 0.5, "shtear": 0, "shtrail": 0, "shfloor": 0.12, "shsrcfoot": 0.5, "shspin": 1}
+ # 文字のエフェクトが一撃ごとに描く単語（jit.lcd。空白なし・ASCII）
+ WORDS = ["EMPREINTES", "EMPREINTE", "VERRE", "GLISSEMENTS", "MASSE", "PULSATIONS", "RESONANCES", "TRACE", "SOUFFLE", "PEAU", "//", "+++"]
+ 
+@@ -163,7 +171,8 @@
+ p.wire(vt0, p.msg("jit_gl_texture ept_vid", VX + 700, 275), outlet=1); p.wire("obj-%d" % p.n, vprev)
+ vt = p.obj("t b b", VX, 325, 1, 2); p.wire(vt0, vt, outlet=0)
+ mv = p.obj("jit.movie @output_texture 1 @drawto ept @autostart 0 @loop 1 @vol 0", VX, 380, 1, 2, w=330)   # 動画の音は出さない（音楽は sfplay~）
+-p.wire(vt, mv, outlet=0)
++srcg = p.obj("gate 2 1", VX - 120, 355, 2, 2)   # 映像の素: 1 = 動画、2 = 影（ept_cfg src、下の「影」）
++p.wire(vt, srcg, outlet=0, inlet=1); p.wire(srcg, mv, outlet=0)
+ movb = button("動画を開く", VX + 340, 350)
+ # 動画のフルパスを覚え、映像のプリセットの間だけ読み込む（下の「切り替え」）。読み込んであるだけで、止めていても 26 → 18 fps に落ちた（2026-10-15）
+ mvod = p.obj("opendialog", VX + 340, 375, 1, 2); p.wire(movb, mvod)
+@@ -376,7 +385,7 @@
+ p.wire(fin, world)
+ 
+ # ---- 切り替え（プリセットが ept_cfg に video・gen・light を送る）
+-cfg = p.obj("r ept_cfg", 20, 960, 0, 1); cr = p.obj("route video gen light", 20, 985, 1, 4, w=180); p.wire(cfg, cr)
++cfg = p.obj("r ept_cfg", 20, 960, 0, 1); cr = p.obj("route video gen light src shauto", 20, 985, 1, 6, w=220); p.wire(cfg, cr)
+ cv = p.obj("t i i i", 20, 1010, 1, 3); p.wire(cr, cv, outlet=0)
+ p.wire(cv, vgate, outlet=2)
+ # 映像を使わない時は動画を手放す（dispose）。止めただけでは読み込んであるだけで重かった（2026-10-15）。映像のプリセットに入ったら覚えたパスを読み直す
+@@ -430,6 +439,9 @@
+     fx = dict(FXD); fx.update(pr.get("fx", {}))
+     parts = ["ept_cfg video %d" % pr.get("video", 0), "ept_cfg gen %d" % GENS[pr.get("gen", "none")], "ept_cfg light %d" % pr.get("light", 0),
+              "ept_p param breathe %g" % pr.get("breathe", 1)] + ["ept_p param %s %g" % (k, v) for k, v in fx.items()] +             ["ept_byp_%s %d" % (g, all(fx[k] == 0 for k in ks)) for g, ks in GROUPS.items()] + ["ept_name set %s" % pr["name"], "ept_pst bang"]
++    # 影: 映像の素（src）・一撃で次の人（shauto）・影の量を light の次に
++    parts[3:3] = ["ept_cfg src %d" % (pr.get("src", "movie") == "shadow"), "ept_cfg shauto %d" % pr.get("shauto", 0)] + \
++                 ["ept_p param %s %g" % (k, v) for k, v in dict(SHD, **pr.get("shadow", {})).items()]
+     x = 20 + (i % 6) * 150; y = 1190 + (i // 6) * 60
+     assert set(fx) <= set(FXD), pr["name"]
+     bt = button(pr["name"], x, y, w=140)
+@@ -553,9 +565,83 @@
+ p.wire(ly, p.msg("linesegment 0 $1 1920 $1", TX + 20, 715)); p.wire("obj-%d" % p.n, lcd)
+ p.wire(tw, lcd, outlet=0)
+ 
++# ---- 影（2026-10-17、transinst の演奏者の 3D モデル）: 動画の代わりに映像の列へ（ept_cfg src 1）
++# 2 人分（A・B）の jit.gl.model を別々の jit.gl.node に描き（アルファが形。色は使わない）、写しを名前つきのテクスチャに置く。
++# 次のコマの頭に sh_cast が A・B を読んで光 3 つの影を壁に落とす（粒子の群れの ept_pncap と同じく、node の出力から直接は動かさない）。
++# 出力は動画と同じく fx_distort の左の入口へ: 溶ける・ガラス・輪郭の粒子・時間… の列も、流体・反応拡散・繊維の核（ept_vid）もそのまま効く。
++# モデルは足が y = 0・高さ 1（export_shadow_meshes.py）。足を画面の中央に置くので、写しの中の足は y = 0.5（shsrcfoot）
++HX, HY = 2000, 960
++shm = []
++for k, slot in enumerate("AB"):
++    x = HX + k * 460
++    md = p.obj("jit.gl.model ept_sh%s @lighting_enable 0 @material_mode 0 @color 1 1 1 1 @blend_enable 0 @depth_enable 1 @scale 0.75 0.75 0.75" % slot,
++               x, HY + 30, 1, 2, w=440)
++    nd = p.obj("jit.gl.node ept @name ept_sh%s @capture 1 @type float16 @adapt 0 @dim %d %d @erase_color 0 0 0 0 @enable 0" % ((slot,) + VID),
++               x, HY + 60, 1, 2, w=440)
++    cp = p.obj("jit.gl.texture ept @name ept_sh%scap @type float16 @adapt 1" % slot, x, HY + 90, 1, 2, w=300); p.wire(nd, cp)   # 出口はつながない
++    shm.append((md, nd))
++p.wire(lb, p.msg("read %s.obj" % PERFORMERS[0], HX + 920, HY + 30)); p.wire("obj-%d" % p.n, shm[0][0])   # 最初は A に 1 人目
++sht = p.obj("t b b", HX, HY + 130, 1, 2); p.wire(srcg, sht, outlet=1)
++shc = pix("sh_cast", HX, HY + 190, VID, inputs=3, typ=VT)
++p.wire(sht, tex_msg("ept_shBcap", HX + 260, HY + 160), outlet=1); p.wire("obj-%d" % p.n, shc, 0, 1)   # 先に B を右の入口へ
++p.wire(sht, tex_msg("ept_shAcap", HX, HY + 160), outlet=0); p.wire("obj-%d" % p.n, shc)
++shfb = p.obj("jit.gl.texture ept @type %s @adapt 1" % VT, HX + 260, HY + 220, 1, 2, w=200); p.wire(shc, shfb); p.wire(shfb, shc, 0, 2)   # 残像
++p.wire(shc, dist); p.wire(rp, shc)
++
++# 回る: 毎コマ (0.2 + 1.8 × 音量) × shspin 度
++spin = p.obj("f 0.", HX + 600, HY + 130, 2, 1); p.wire(sht, spin, outlet=0)
++spa = p.obj("+ 0.2", HX + 600, HY + 160, 2, 1); p.wire(spin, spa); p.wire(spa, spin, 0, 1)
++spk = p.obj("expr (0.2+1.8*$f1)*$f2", HX + 700, HY + 130, 2, 1, w=150); p.wire(spk, spa, 0, 1)
++p.wire(p.obj("r ept_lv", HX + 700, HY + 100, 0, 1), spk)
++srp = p.obj("route param", HX + 860, HY + 70, 1, 2); p.wire(rp, srp)
++p.wire(srp, p.obj("route shspin", HX + 860, HY + 100, 1, 2)); p.wire("obj-%d" % p.n, spk, 0, 1)
++srot = p.msg("rotatexyz 0 $1 0", HX + 600, HY + 190); p.wire(spin, srot)
++for md, nd in shm: p.wire(srot, md)
++
++# 映像の素の切り替え（ept_cfg src）: 先に gate、次に node を動かす/止める、影なら動画を手放して縦横比を 16:9 に
++cs = p.obj("t i i i", HX, HY - 60, 1, 3); p.wire(cr, cs, outlet=3)
++p.wire(cs, p.obj("+ 1", HX + 160, HY - 35, 2, 1), outlet=2); p.wire("obj-%d" % p.n, srcg)
++p.wire(cs, p.msg("enable $1", HX + 80, HY - 35), outlet=1)
++for md, nd in shm: p.wire("obj-%d" % p.n, nd)
++csel = p.obj("sel 1", HX, HY - 35, 2, 2); p.wire(cs, csel, outlet=0)
++cst = p.obj("t b b", HX, HY - 10, 1, 2); p.wire(csel, cst)
++p.wire(cst, p.msg("dispose", HX + 80, HY - 10), outlet=1); p.wire("obj-%d" % p.n, mv)
++send("param srcasp 1.7778", HX + 160, HY - 10, cst, outlet=0)
++
++# 誰の影か: ept_perf <id>（メニュー・OSC /performer・一撃で次の人）。今見えていない側に読み込み、shswap を 2.5 秒で動かして入れ替える
++pft = p.obj("t s b", HX, HY + 285, 1, 2); p.wire(p.obj("r ept_perf", HX, HY + 260, 0, 1), p.obj("tosymbol", HX + 80, HY + 260, 1, 1)); p.wire("obj-%d" % p.n, pft)
++side = p.obj("f 0", HX + 120, HY + 310, 2, 1); p.wire(pft, side, outlet=1)        # 今見えている側（0 = A、1 = B）
++nside = p.obj("== 0", HX + 120, HY + 335, 2, 1); p.wire(side, nside); p.wire(nside, side, 0, 1)
++nst = p.obj("t i i", HX + 120, HY + 360, 1, 2); p.wire(nside, nst)
++rg = p.obj("gate 2", HX + 200, HY + 410, 2, 2); p.wire(nst, p.obj("+ 1", HX + 200, HY + 385, 2, 1), outlet=1); p.wire("obj-%d" % p.n, rg)
++tgt = p.obj("f", HX, HY + 410, 2, 1); p.wire(nst, tgt, outlet=0, inlet=1)
++ldt = p.obj("t b s", HX, HY + 310, 1, 2); p.wire(pft, ldt, outlet=0)                # 先に読み込み、次に入れ替え
++p.wire(ldt, p.obj("sprintf %s.obj", HX + 280, HY + 335, 1, 1), outlet=1)
++p.wire("obj-%d" % p.n, p.obj("prepend read", HX + 280, HY + 360, 1, 1)); p.wire("obj-%d" % p.n, rg, 0, 1)
++p.wire(rg, shm[0][0], outlet=0); p.wire(rg, shm[1][0], outlet=1)
++p.wire(ldt, tgt, outlet=0)
++p.wire(tgt, p.msg("$1 2500", HX, HY + 435)); p.wire("obj-%d" % p.n, p.obj("line 0. 33", HX, HY + 460, 3, 2))
++send("param shswap $1", HX, HY + 485, "obj-%d" % p.n)
++pmenu = p.ui("umenu", HX + 400, HY + 260, w=150, h=22, ins=1, outs=3, items=[t for x in PERFORMERS for t in (x, ",")][:-1])
++p.wire(pmenu, p.obj("s ept_perf", HX + 400, HY + 290, 1, 0), outlet=1)
++# 一撃で次の人（プリセットの "shauto": 1、5 秒より速くは変えない）
++aut = p.ui("toggle", HX + 600, HY + 260, w=20, h=20); autc = p.comment("一撃で次の人", HX + 624, HY + 260, w=100)
++p.wire(cr, aut, outlet=4)
++ag = p.obj("gate 1", HX + 600, HY + 310, 2, 1); p.wire(aut, ag); p.wire(hit, ag, outlet=0, inlet=1)
++asl = p.obj("speedlim 5000", HX + 600, HY + 335, 2, 1); p.wire(ag, asl)
++arn = p.obj("random %d" % len(PERFORMERS), HX + 600, HY + 360, 2, 1); p.wire(asl, arn)
++alk = p.obj("zl.lookup", HX + 600, HY + 385, 2, 2); p.wire(arn, alk)
++p.wire(lb, p.msg(" ".join(PERFORMERS), HX + 700, HY + 360, w=300)); p.wire("obj-%d" % p.n, alk, 0, 1)
++p.wire(alk, p.obj("s ept_perf", HX + 600, HY + 410, 1, 0))
++SHY = 134 + (len(SHOWN) + 4) // 5 * 32 + 6   # プリセットのボタンの下
++pres(p.comment("影", HX + 400, HY + 230, w=40), 10, SHY, 30, 22); pres(pmenu, 40, SHY, 150, 22); pres(aut, 200, SHY + 1, 20, 20); pres(autc, 224, SHY, 100, 22)
++
+ # ---- 外から: OSC 7491  /open <WAV>・/play 0|1・/preset <番号>（/mode も同じ）・/input 0|1・/rec <mov>・/stop・/snap <png>・/movie <動画>・/light 0|1
++#   ・/performer <id>（影の演奏者を入れ替える）・/src 0|1（映像の素: 0 = 動画、1 = 影）
+ osc = p.obj("udpreceive 7491", 20, 1420, 1, 1); OSC_ID = p.n
+-orr = p.obj("route /open /play /preset /input /rec /stop /snap /movie /light /mode", 20, 1450, 1, 11, w=420); p.wire(osc, orr)
++orr = p.obj("route /open /play /preset /input /rec /stop /snap /movie /light /mode /performer /src", 20, 1450, 1, 13, w=520); p.wire(osc, orr)
++p.wire(orr, p.obj("s ept_perf", 560, 1480, 1, 0), outlet=10)
++p.wire(orr, p.msg("; ept_cfg src $1", 640, 1480), outlet=11)
+ p.wire(orr, p.obj("prepend open", 20, 1480, 1, 1), outlet=0); p.wire("obj-%d" % p.n, sf)
+ p.wire(orr, play, outlet=1); p.wire(orr, psel, outlet=2); p.wire(orr, psel, outlet=9); p.wire(orr, inp, outlet=3)
+ p.wire(orr, p.obj("prepend write", 240, 1480, 1, 1), outlet=4); p.wire("obj-%d" % p.n, rec)
+@@ -588,7 +674,7 @@
+     tm = p.obj("timer", 1100, 1545, 2, 2); p.wire(ft2, tm, outlet=1, inlet=1); p.wire(ft2, tm, outlet=0)
+     p.wire(tm, p.obj("expr 150000./$f1", 1100, 1570, 1, 1)); p.wire("obj-%d" % p.n, p.obj("print fps", 1100, 1595, 1, 0))
+     # /tf 0|1・/mesh 0|1: 粒子の群れのどの段が重いかを切り分ける
+-    dr = p.obj("route /tf /mesh /mv /tex /param", 1450, 1450, 1, 6); p.wire(orr, dr, outlet=10)
++    dr = p.obj("route /tf /mesh /mv /tex /param", 1450, 1450, 1, 6); p.wire(orr, dr, outlet=12)
+     p.wire(dr, p.obj("prepend param", 2000, 1475, 1, 1), outlet=4); p.wire("obj-%d" % p.n, p.obj("s ept_p", 2000, 1500, 1, 0))   # /param <名前> <値>
+     # /tex <名前つきテクスチャ> <png>: そのテクスチャを読み戻して PNG に（状態の確かめ用）
+     tu = p.obj("unpack s s", 1750, 1475, 1, 2); p.wire(dr, tu, outlet=3)

@@ -1,0 +1,75 @@
+// 影（2026-10-17）: 演奏者の 3D モデルの影を壁に落とす。in1 = A、in2 = B（jit.gl.node に白い形で描いた写し。アルファが形）、in3 = 1 コマ前の出力（残像）。
+//   光は shlights 個（1–3）。左右に shspread だけ離れ、それぞれがゆっくり揺れる。重なった所ほど暗い（舞台の多重の影）
+//   低域で光が近づいて影が大きく脈打つ・一撃で光が揺れて影がぶれる・嵐と shtear で影が上の方からちぎれる
+//   音量で壁の明るさと半影（足もとはくっきり、上ほどぼける）
+//   shswap 0 → 1 で A から B へ。壁の上の fBm の境目から焼けるように入れ替わり、境目が光る
+// 写しの中ではモデルの足が y = shsrcfoot（画面の中央）、壁では床の線が y = shfloor。y は下が 0
+Param time(0);
+Param level(0);
+Param low(0);
+Param storm(0);
+Param hitT(-100);
+Param aspect(1.7778);
+Param light(0);
+Param shlights(3);
+Param shspread(0.5);
+Param shsize(1.5);
+Param shsoft(0.5);
+Param shtear(0);
+Param shtrail(0);
+Param shswap(0);
+Param shfloor(0.12);
+Param shsrcfoot(0.5);
+
+age = max(0, time - hitT);
+burst = exp(-age * 3);
+u = norm;
+P = vec((u.x - 0.5) * aspect, u.y);
+nl = clamp(floor(shlights + 0.5), 1, 3);
+
+// 入れ替わりの境目（どの光の影も壁の同じ所で入れ替わる）
+thr = fbm(P * 2.5 + vec(0, time * 0.05));
+front = shswap * 1.25 - 0.12;
+sw = smoothstep(thr - 0.06, thr + 0.06, front);
+st = (front - thr) / 0.03;
+seam = (shswap > 0.001 && shswap < 0.999) ? exp(-st * st) : 0;
+
+// 光ごとに壁の点 → 写しの点（足もとを支点に、傾け・大きさ・ちぎれ）を求め、9 点で半影をならす
+lit = 0;
+for (k = 0; k < 3; k += 1) {
+	if (k < nl) {
+		kk = nl > 1 ? k / (nl - 1) * 2 - 1 : 0;
+		ph = time * (0.06 + 0.025 * k) + k * 2.1;
+		jolt = (hash2(vec(k * 7 + 1, floor(hitT * 30))) - 0.5) * burst;
+		lean = kk * shspread * 0.8 + sin(ph) * 0.2 * shspread + jolt * 0.8;
+		sz = shsize * (1 + 0.3 * low + 0.12 * burst) * (1 - 0.1 * abs(kk));
+		y = max(0, u.y - shfloor);
+		x = P.x - kk * shspread * 0.25 - lean * y;
+		tear = curl(vec(x, y) * 3 + vec(k * 3.1, time * 0.2)) * shtear * (0.3 * storm + burst) * y * 0.08;
+		su = vec(0.5 + x / sz / aspect, shsrcfoot + y / sz) + tear;
+		rad = shsoft * (0.001 + 0.004 * level + 0.012 * y);
+		m = 0;
+		for (j = 0; j < 9; j += 1) {
+			a = j * 0.698 + k;
+			r = j < 0.5 ? 0 : rad;
+			o = vec(cos(a) * r / aspect, sin(a) * r);
+			m += mix(sample(in1, su + o).w, sample(in2, su + o).w, sw);
+		}
+		m = u.y < shfloor ? 0 : m / 9;
+		lit += (1 - m) / nl;
+	}
+}
+
+// 壁: 黒地は床の上のスポット（音量で明るく、一撃で瞬く）、白地は全面が明るい壁。
+// 光が 3 つだと 1 つの影は光の 1/3 しか遮らず灰色に見えたので、二乗して濃く（重なりはほぼ黒）。真っ黒にはしない（回り込む光）
+d = length((P - vec(0, shfloor + 0.38)) * vec(0.75, 1));
+spot = (1 - smoothstep(0.15, 0.95, d)) * (0.45 + 0.4 * level + 0.25 * burst) + 0.04;
+wall = light > 0.5 ? 0.92 + 0.05 * level : spot;
+wall = u.y < shfloor ? wall * 0.6 : wall;
+v = wall * (0.06 + 0.94 * lit * lit) + seam * (1 - lit) * 0.9;
+
+// 残像: 暗い所（影）を 1 コマ前から引き継ぎ、少しずつ明るく戻す
+prev = sample(in3, u).x;
+v = mix(v, min(v, prev + 0.01), shtrail);
+v = clamp(v + (hash2(u * vec(1280, 720) + fract(time * 13.7) * 91) - 0.5) * 0.025, 0, 1);
+out1 = vec(v, v, v, 1);
