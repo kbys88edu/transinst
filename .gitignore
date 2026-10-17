@@ -2,3 +2,4 @@ models/raw*/
 models/points*/
 __pycache__/
 .DS_Store
+models/candidates*/
