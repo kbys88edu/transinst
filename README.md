@@ -10,7 +10,7 @@
 
 | パス | 内容 |
 | --- | --- |
-| `models/manifest.json` | 奏者29人（オーケストラ全楽器と指揮者）の定義。楽器、姿勢、衣装、プロンプト |
+| `models/manifest.json` | 奏者29人（オーケストラ全楽器と指揮者）の定義。楽器、姿勢、衣装、プロンプト。`"exclude": true` の奏者は、`--ids` で名前を指定しない限り生成しない（今はシンバルを除外している） |
 | `scripts/meshy_generate.py` | Meshy の text-to-3D API で GLB を生成する。結果は `models/raw/<id>/` に保存 |
 | `scripts/glb_to_pointcloud.py` | GLB を同じ点数・同じ並び順の点群（`.jxf`）に変換する。保存先は `models/points/` |
 | `max/performer_fx.genexpr` | jit.gen 用のコード。点群を変形（モーフ）、融解、飛散させる |

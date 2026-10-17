@@ -140,6 +140,8 @@ def main():
         if unknown:
             sys.exit(f"unknown ids: {', '.join(sorted(unknown))}")
         performers = [x for x in performers if x["id"] in args.ids]
+    else:
+        performers = [x for x in performers if not x.get("exclude")]
     if args.tier is not None:
         performers = [x for x in performers if x["tier"] == args.tier]
 
