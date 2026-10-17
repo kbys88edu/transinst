@@ -89,16 +89,24 @@ def generate(manifest, performer, args, key):
             "prompt": state["prompt"],
             "ai_model": args.ai_model,
             "topology": "triangle",
-            "should_remesh": True,
-            "target_polycount": args.polycount,
+            "should_remesh": args.polycount is not None,  # no remesh keeps the full generated detail
         }
+        if args.polycount is not None:
+            body["target_polycount"] = args.polycount
         state["preview_id"] = request("POST", API, key, body)["result"]
         save()
     final = wait(state["preview_id"], key, "preview")
 
     if not args.no_refine:
         if "refine_id" not in state:
-            body = {"mode": "refine", "preview_task_id": state["preview_id"], "enable_pbr": False}
+            body = {
+                "mode": "refine",
+                "preview_task_id": state["preview_id"],
+                "ai_model": args.ai_model,
+                "enable_pbr": not args.no_pbr,
+                "texture_resolution": args.texture_resolution,
+                "texture_prompt": f'{manifest["wardrobe"][performer["wardrobe"]]}, {manifest["style"]["texture_prompt"]}',
+            }
             state["refine_id"] = request("POST", API, key, body)["result"]
             save()
         final = wait(state["refine_id"], key, "refine")
@@ -116,8 +124,10 @@ def main():
     p.add_argument("--ids", nargs="*", help="performer ids (default: all, filtered by --tier)")
     p.add_argument("--tier", type=int, help="only performers with this tier (1 = one per section, try first)")
     p.add_argument("--out", type=Path, default=ROOT / "models" / "raw")
-    p.add_argument("--ai-model", default="latest")
-    p.add_argument("--polycount", type=int, default=30000)
+    p.add_argument("--ai-model", default="meshy-7.1", help="highest-quality Meshy engine")
+    p.add_argument("--polycount", type=int, help="remesh to this many faces (default: keep full detail)")
+    p.add_argument("--texture-resolution", default="4k")
+    p.add_argument("--no-pbr", action="store_true", help="base colour only, no metallic/roughness/normal maps")
     p.add_argument("--no-refine", action="store_true", help="geometry only, no texture (cheaper)")
     p.add_argument("--dry-run", action="store_true", help="print prompts without calling the API")
     args = p.parse_args()

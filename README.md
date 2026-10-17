@@ -44,7 +44,11 @@ python3 scripts/meshy_generate.py --no-refine        # 形状のみ（テクス�
 
 - 生成済みの奏者はスキップする。中断しても `task.json` から再開できる。
 - tier 1 は各セクションの代表で、violin / cello / harp / flute / trumpet / timpani の6人。全員を回す前にトーンを確認する用。
-- 衣装や雰囲気を変えたいときは、`manifest.json` の `style.suffix` と `wardrobe` を編集する。
+- 衣装や雰囲気を変えたいときは、`manifest.json` の `style.suffix`、`style.texture_prompt`、`wardrobe` を編集する。
+- 初期設定は最高品質。meshy-7.1、リメッシュなし（細部を残す）、PBRマップ付き、4Kテクスチャ。GLBは1人あたり約40MB。
+  - 軽くしたいとき：`--polycount 30000 --texture-resolution 2k --no-pbr`
+- モデルは自然な色の写実で作り、モノクロ化は Max 側で行う。プロンプトで白黒を指定すると、肌まで石膏像のようになるため。
+- テクスチャのプロンプトにも衣装の指定を入れている。入れないと、形状とは関係なく別の服の色が塗られることがある。
 
 ## 2. Max 用の点群に変換
 

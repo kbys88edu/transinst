@@ -1,7 +1,8 @@
 {
   "style": {
-    "note": "参考: モノクロ高コントラスト。白いプリーツの長衣（参考画像1）／黒い衣装（参考画像3・4）。Max側でモノクロ化するので、テクスチャは無彩色寄りにしておく。",
-    "suffix": "full body, single realistic human musician, natural performing posture, monochrome palette, black and white photographic look, high contrast studio lighting, clean anatomy, instrument clearly separated from the body"
+    "note": "参考: モノクロ高コントラスト。白いプリーツの長衣（参考画像1）／黒い衣装（参考画像3・4）。モデル自体は自然な色の写実で作り、モノクロ化は Max 側で行う（プロンプトで白黒を指定すると肌まで石膏像のようになるため）。",
+    "suffix": "full body, photorealistic adult human musician, lifelike face and skin, realistic hands and fingers, accurate anatomy and proportions, natural performing posture, detailed realistic fabric folds, accurately shaped real orchestral instrument, instrument clearly separated from the body",
+    "texture_prompt": "photorealistic, natural human skin tones with pores and subtle variation, realistic hair, real cloth fabric with soft folds, real wood, polished brass and metal on the instrument, neutral even lighting, no baked shadows"
   },
   "wardrobe": {
     "white": "wearing a loose flowing white pleated linen garment, barefoot",

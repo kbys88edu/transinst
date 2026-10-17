@@ -50,6 +50,28 @@ def load_mesh(path):
     return meshes
 
 
+def surface_colour(mesh, points, faces):
+    """RGB 0..1 at each sampled point from the base-colour texture (Meshy GLBs use PBR materials)."""
+    visual = mesh.visual
+    material = getattr(visual, "material", None)
+    image = getattr(material, "baseColorTexture", None) or getattr(material, "image", None)
+    factor = getattr(material, "baseColorFactor", None)
+    factor = np.asarray([255] * 4 if factor is None else factor, dtype=np.float32)[:3]
+    factor = factor / 255.0 if factor.max() > 1 else factor
+    uv = getattr(visual, "uv", None)
+    if image is None or uv is None:
+        return np.tile(factor, (len(points), 1))
+
+    tri = mesh.vertices[mesh.faces[faces]]
+    bary = trimesh.triangles.points_to_barycentric(tri, points)
+    st = np.einsum("ij,ijk->ik", bary, uv[mesh.faces[faces]])
+    tex = np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0
+    h, w = tex.shape[:2]
+    x = (np.mod(st[:, 0], 1) * (w - 1)).round().astype(int)
+    y = ((1 - np.mod(st[:, 1], 1)) * (h - 1)).round().astype(int)
+    return tex[y, x] * factor
+
+
 def sample(meshes, count, seed):
     """Sample `count` surface points across all meshes, area-weighted, with greyscale colour."""
     areas = np.array([m.area for m in meshes])
@@ -58,14 +80,9 @@ def sample(meshes, count, seed):
     for m, n in zip(meshes, counts):
         if n == 0:
             continue
-        try:
-            p, _, c = trimesh.sample.sample_surface(m, n, sample_color=True, seed=seed)
-            c = np.asarray(c, dtype=np.float32)[:, :3] / 255.0
-        except Exception:  # untextured or unreadable texture: fall back to mid grey
-            p, _ = trimesh.sample.sample_surface(m, n, seed=seed)
-            c = np.full((n, 3), 0.5, dtype=np.float32)
+        p, faces = trimesh.sample.sample_surface(m, n, seed=seed)
         pts.append(p)
-        cols.append(c)
+        cols.append(surface_colour(m, p, faces))
     pts = np.concatenate(pts).astype(np.float32)
     grey = np.concatenate(cols) @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
     return pts, grey
