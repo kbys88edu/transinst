@@ -7,6 +7,9 @@ Each performer runs preview (geometry) -> refine (texture) and saves:
 Re-running skips performers whose GLB already exists and resumes
 in-flight tasks recorded in task.json, so an interrupted batch costs nothing extra.
 
+Auth: MESHY_API_KEY, or a "Bearer" network secret for api.meshy.ai on the
+cloud environment (the proxy adds the header, so no key is needed here).
+
 Usage:
   MESHY_API_KEY=... python3 scripts/meshy_generate.py --tier 1
   python3 scripts/meshy_generate.py --ids violin cello --dry-run
@@ -36,10 +39,10 @@ def build_prompt(manifest, performer):
 
 def request(method, url, key, body=None):
     data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(url, data=data, method=method, headers={
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    })
+    headers = {"Content-Type": "application/json"}
+    if key:  # without a key, the cloud environment's network secret adds the header
+        headers["Authorization"] = f"Bearer {key}"
+    req = urllib.request.Request(url, data=data, method=method, headers=headers)
     try:
         with urllib.request.urlopen(req, timeout=60) as res:
             return json.load(res)
@@ -138,7 +141,7 @@ def main():
 
     key = os.environ.get("MESHY_API_KEY")
     if not key:
-        sys.exit("MESHY_API_KEY is not set")
+        print("MESHY_API_KEY not set; relying on a network secret for api.meshy.ai", file=sys.stderr)
     failed = []
     for x in performers:
         try:

@@ -19,8 +19,20 @@
 
 必要なものは2つ。
 
-- 環境変数 `MESHY_API_KEY`
-- ネットワークから `api.meshy.ai` に接続できること
+- APIキー：次のどちらか
+  - クラウド環境の「Network secrets」に登録する（推奨）。設定は下記
+  - 環境変数 `MESHY_API_KEY` に入れる（ローカルで実行するとき）
+
+クラウド環境の「Network secrets」の設定：
+
+| 項目 | 入れる値 |
+| --- | --- |
+| Secret type | `Bearer` |
+| Name | `Meshy` など、わかりやすい名前 |
+| Allowed websites | `api.meshy.ai` |
+| Custom headers | Name `Authorization`、Prefix `Bearer`、Value にMeshyのAPIキー |
+
+Network secrets に登録したホストには、ネットワークのアクセスレベルに関係なく接続できる。
 
 ```sh
 python3 scripts/meshy_generate.py --dry-run          # プロンプトの確認だけ（課金なし）
