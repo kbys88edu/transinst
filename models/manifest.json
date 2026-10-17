@@ -30,7 +30,7 @@
     {"id": "bass_trombone", "ja": "バストロンボーン",   "section": "brass",      "tier": 2, "wardrobe": "black", "subject": "a bass trombonist standing, large-bore bass trombone at the lips, slide extended forward"},
     {"id": "tuba",          "ja": "チューバ",           "section": "brass",      "tier": 2, "wardrobe": "white", "subject": "a tuba player seated, large brass tuba on the lap, bell pointing upward"},
 
-    {"id": "timpani",       "ja": "ティンパニ",         "section": "percussion", "tier": 1, "wardrobe": "white", "subject": "a timpanist standing behind two large copper kettle drums, mallets raised in both hands"},
+    {"id": "timpani",       "ja": "ティンパニ",         "section": "percussion", "tier": 1, "wardrobe": "white", "subject": "a timpanist standing behind two large orchestral timpani: wide hemispherical polished copper kettle bowls on short three-legged stands with foot pedals, white drum heads facing up at waist height, felt-headed mallets raised in both hands"},
     {"id": "snare_drum",    "ja": "スネアドラム",       "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing at a snare drum on a stand, two drumsticks striking"},
     {"id": "bass_drum",     "ja": "大太鼓",             "section": "percussion", "tier": 2, "wardrobe": "black", "subject": "a percussionist standing beside a large concert bass drum mounted on a tilting stand, striking with a big soft beater"},
     {"id": "cymbals",       "ja": "シンバル",           "section": "percussion", "tier": 2, "wardrobe": "white", "subject": "a percussionist standing, a pair of large crash cymbals held apart in both hands about to clash"},
